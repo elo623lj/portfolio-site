@@ -9,19 +9,31 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
   }
   body {
+    position: fixed;
+    overflow: hidden;
+    overscroll-behavior-y: none;
     text-rendering: optimizeLegibility !important;
     -webkit-font-smoothing: antialiased !important;
   }
   body, input, textarea {
-    font-family: 'Ubuntu', sans-serif !important;
+    font-family: 'Biko', sans-serif !important;
   }
   a, button {
     outline: none;
   }
-  #root {
-
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    overflow: hidden;
   }
-
 `;
 
 export default GlobalStyle;

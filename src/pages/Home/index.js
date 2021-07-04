@@ -1,6 +1,9 @@
 import React from 'react';
 
+import ThreeCanvas from '@/components/ThreeCanvas'
+import Background from '@/components/Background'
 import Cards from '@/components/Cards'
+import Title from '@/components/Title'
 
 import {
   Container
@@ -9,9 +12,9 @@ import {
 const Home = () => {
 
   return (
-    <Container>
-      <Cards/>
-    </Container>
+    <>
+      <ThreeCanvas/>
+    </>
   );
 }
 
