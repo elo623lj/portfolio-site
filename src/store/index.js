@@ -17,6 +17,7 @@ const middlewares = [
 
 const store = createStore(
   rootReducer(history),
+  {},
   compose(applyMiddleware(...middlewares)),
 );
 

@@ -68,7 +68,7 @@ export default function Effects() {
     <>
         <effectComposer ref={baseComposer} args={[gl, baseRenderTarget]}>
             <renderPass attachArray="passes" scene={scene} camera={camera} />
-            <unrealBloomPass attachArray="passes" args={[aspect, 0.5, 1, 0]} />
+            <unrealBloomPass attachArray="passes" args={[aspect, 0.6, 0.5, 0.8]} /> {/* strength radius threshold */}
         </effectComposer>
 
         {/* <effectComposer ref={previewOcclusionComposer} args={[gl, previewOcclusionRenderTarget]} >

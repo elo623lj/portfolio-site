@@ -1,16 +1,20 @@
-import React from 'react';
-import { Switch, Route } from 'react-router-dom';
-import { ConnectedRouter } from 'connected-react-router';
+import React from 'react'
+import { Switch, Route } from 'react-router-dom'
+import { ConnectedRouter } from 'connected-react-router'
 
-import Home from '@/pages/Home';
+import history from './history'
 
-import history from './history';
+import NavBar  from '@/components/NavBar'
+import Home from '@/pages/Home'
+import Works from '@/pages/Works'
 
 const Routes = () => (
   <ConnectedRouter history={history}>
     <Switch>
-      <Route path="/" component={Home} />
+      <Route exact path="/" component={Home} />
+      <Route path="/works" component={Works} />
     </Switch>
+    <NavBar/>
   </ConnectedRouter>
 );
 

@@ -16,7 +16,7 @@ const GlobalStyle = createGlobalStyle`
     -webkit-font-smoothing: antialiased !important;
   }
   body, input, textarea {
-    font-family: 'Biko', sans-serif !important;
+    // font-family: 'Biko', sans-serif !important;
   }
   a, button {
     outline: none;
