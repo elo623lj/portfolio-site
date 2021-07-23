@@ -18,7 +18,7 @@ export default function Preview() {
     materialRef.current.uniforms.time.value += delta 
   })
 
-  const texture = useTexture("/1.jpg") //1.jpg
+  const texture = useTexture("/1.jpg") 
   const noise = useTexture("/noise.png")
   const width =  256 * 0.01
   const height = 144 * 0.01

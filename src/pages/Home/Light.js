@@ -4,6 +4,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { softShadows, OrbitControls } from "@react-three/drei"
 import { EffectComposer, SSAO, BrightnessContrast } from "@react-three/postprocessing"
 
+import Loader from '@/components/Loader'
+import Heptagon from '@/components/Heptagon'
 
 softShadows({
   frustum: 3.75,
@@ -106,38 +108,30 @@ const Background = () => {
     }
   })
 
-  const onPointerOver = (e) => {
-    // console.log(e)
-    // e.object.material.color = new THREE.Color('red')
-  }
-
-  const onPointerOut = (e) => {
-    // console.log(e)
-    // e.object.material.color = new THREE.Color('white')
-  }
-
   return (
-    <group ref={sqauresRef} position={[-38, -39, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
-      {squares.map((square, index) => (
-        <group 
-          key={index} 
-          position={[square.x + square.width * SIZE * 0.5, square.y + square.height * SIZE * 0.5, 0]} 
-          scale={[square.width, square.height, 1]} 
-          isTall={square.isTall}
-          {...square.isTall && { 
-            rand: square.rand
-          }}
-        >
-          <mesh receiveShadow position={[0, 0, 0.01]}>
-            <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
-            <meshStandardMaterial color='white' flatShading />
-          </mesh>
-          <mesh castShadow>
-            <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
-            <meshStandardMaterial side={THREE.DoubleSide} transparent opacity={0} flatShading  />
-          </mesh>
-        </group>
-      ))}
+    <group rotation={[0, 0, -Math.PI * 3 / 4]}>
+      <group ref={sqauresRef} position={[-38, -39, 0]}>
+        {squares.map((square, index) => (
+          <group 
+            key={index} 
+            position={[square.x + square.width * SIZE * 0.5, square.y + square.height * SIZE * 0.5, 0]} 
+            scale={[square.width, square.height, 1]} 
+            isTall={square.isTall}
+            {...square.isTall && { 
+              rand: square.rand
+            }}
+          >
+            <mesh receiveShadow position={[0, 0, 0.01]}>
+              <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
+              <meshStandardMaterial color='white' flatShading />
+            </mesh>
+            <mesh castShadow>
+              <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
+              <meshStandardMaterial side={THREE.DoubleSide} transparent opacity={0} flatShading  />
+            </mesh>
+          </group>
+        ))}
+      </group>
     </group>
   )
 }
@@ -173,8 +167,6 @@ export default function HomeLight() {
 
   }, []); 
 
-
-
   return (
     <Canvas 
       orthographic 
@@ -182,7 +174,7 @@ export default function HomeLight() {
       camera={{ position: [0, 0, 60], fov: 60, zoom: 24 }}
       gl={{ alpha: false, stencil: false, depth: false, antialias: false }}
     >
-      <Suspense fallback={null}>
+      <Suspense fallback={<Loader/>}>
         <ambientLight intensity={0.2} />
         <directionalLight
           castShadow
@@ -197,16 +189,13 @@ export default function HomeLight() {
           shadow-camera-top={20}
           shadow-camera-bottom={-20}
         />
-        <group rotation={[0, 0, -Math.PI * 3 / 4]}>
-          <Background/>
-          {/* <Main/> */}
-        </group>
+        <Background/>
+        {/* <Heptagon  /> */}
+        <EffectComposer multisampling={0}>
+          <SSAO samples={25} radius={5} intensity={50} luminanceInfluence={0.6} />
+          <BrightnessContrast brightness={0.2} />
+        </EffectComposer>
       </Suspense>
-      <EffectComposer multisampling={0}>
-        <SSAO samples={25} radius={5} intensity={50} luminanceInfluence={0.6} />
-        <BrightnessContrast brightness={0.2} />
-      </EffectComposer>
-      {/* <OrbitControls /> */}
     </Canvas>
   )
 }

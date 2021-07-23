@@ -15,7 +15,9 @@ export default function NavBar() {
     }
 
     return (
-      <Link to={`/${target}`} onClick={onClick}>{target == '' ? 'home' : target}</Link>
+      <Link to={`/${target}`} onClick={onClick}>
+        <span>{target == '' ? 'home' : target}</span>
+      </Link>
     )
   }
  

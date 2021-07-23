@@ -10,8 +10,6 @@ export const CanvasContainer = styled.div`
 
 export const Title = styled.div`
     position: absolute;
-    width: 100%;
-    height: 100%;
     top: 17%;
     left: 5%;
     font-size: 20px;
