@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux'
 import * as THREE from "three"
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Reflector, useTexture } from '@react-three/drei'
-import { ResizeObserver } from '@juggle/resize-observer'
 import GlitchShader from '@/shaders/GlitchShader' 
 
 const DEFAULT_CAMERA_POS = [10, 2, 30]
@@ -87,7 +86,6 @@ export default function WorksDark() {
       shadows
       gl={{ antialias: true }}
       camera={{ position: DEFAULT_CAMERA_POS, fov: 35 }}
-      resize={{ polyfill: ResizeObserver }}
     >
       <color attach="background" args={['black']} />
       <Suspense fallback={null}>

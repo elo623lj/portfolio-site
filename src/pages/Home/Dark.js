@@ -3,6 +3,7 @@ import * as THREE from "three"
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Reflector, Text, useTexture, useGLTF, OrbitControls } from '@react-three/drei'
 import { EffectComposer, DepthOfField, Bloom, Noise, Vignette } from '@react-three/postprocessing'
+import { ResizeObserver } from '@juggle/resize-observer'
 import Effects from '@/components/Effects'
 
 const torus = new THREE.TorusBufferGeometry(4, 2, 128, 128)
@@ -66,6 +67,7 @@ export default function HomeDark() {
       gl={{ alpha: false }} 
       pixelRatio={[1, 1.5]} 
       camera={{ position: [0, 3, 20], fov: 15 }}
+      resize={{ polyfill: ResizeObserver }}
     >
       <color attach="background" args={['black']} />
       {/* <fog attach="fog" args={['black', 15, 20]} /> */}

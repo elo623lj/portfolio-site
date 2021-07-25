@@ -1,9 +1,12 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect } from 'react'
 import store from '@/store'
-import { useThree, useFrame } from '@react-three/fiber'
+import { useThree, useFrame, extend } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import TransitionShader from '@/shaders/TransitionShader'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+
+extend({ ShaderPass })
 
 const TransitionShaderPass = ({ isOn }) => {
 

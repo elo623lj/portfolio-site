@@ -1,68 +1,110 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import store from '@/store'
 import { useSelector } from 'react-redux'
-import { useProgress } from "@react-three/drei"
 
 import {
   CanvasContainer,
   Info,
   InfoTitle,
   InfoType,
-  InfoContent
+  InfoContent,
+  BottomRow
 } from './styles'
 
 import Dark from './Dark'
 import Light from './Light'
 
-
 export default function Works() {
 
-  const darkMode = useSelector(state => state.darkMode)
-  const { progress } = useProgress()
-
+  let timeoutRef = useRef(null)
   useEffect(() => {
-    if (darkMode.isLoading && progress == 100) {
-      setTimeout(
-        () => store.dispatch({ type: 'DARK_MODE_LOADING_FINISH' })
-      , 1000)
-    }
-  }, [darkMode.isLoading, progress])
+    setTimeout(
+      () => {
+        setIsTextRevealed(true)
+      }
+    , 500)
+  }, [])
 
-  const [mousePos, setMousePos] = useState(null)
-  
+  const darkMode = useSelector(state => state.darkMode)
+
+  // set info 
+  const currentIndex = useSelector(state => state.works.currentIndex)
+  const [info, setInfo] = useState(null)
+  useEffect(() => {
+    if (timeoutRef.current != null) 
+      clearTimeout(timeoutRef.current)
+
+    const direction = store.getState().works.direction
+    if (direction != null) {
+      setIsTextRevealed(false)
+      timeoutRef.current = setTimeout(
+        () => {
+          setInfo(store.getState().works.data[currentIndex])
+          setIsTextRevealed(true)
+        }
+      , 800)
+    }
+    else setInfo(store.getState().works.data[currentIndex])
+  }, [currentIndex])
+
+  // text reveal
+  const [isTextRevealed, setIsTextRevealed] = useState(false)
+  const textClassName = `reveal-text ${ (isTextRevealed && darkMode.isEnded) ? 'revealed' : ''}`
+
+  const browseWork = (direction) => {
+    store.dispatch({ type: 'BROWSE_WORK', direction: direction })
+  }
+
   return (
     <>
 
       { (darkMode.isOn || !darkMode.isEnded) &&
-        <CanvasContainer
+        <div 
+          className="canvas-wrapper"
           style={{ 
             opacity: !darkMode.isOn && !darkMode.isTransitioning ? 0 : 1
           }}
         >
-          <Dark mousePos={mousePos} setMousePos={setMousePos} />
-        </CanvasContainer>
+          <Dark/>
+        </div>
       }
 
       { (!darkMode.isOn || !darkMode.isEnded) &&
-        <CanvasContainer
+        <div 
+          className="canvas-wrapper"
           style={{ 
             opacity: darkMode.isOn && !darkMode.isTransitioning ? 0 : 1,
-            // zIndex: !darkMode.isOn && !darkMode.isTransitioning ? -1 : 0,
           }}
         >
-          <Light mousePos={mousePos} setMousePos={setMousePos} />
-        </CanvasContainer>
+          <Light/>
+        </div>
       }
 
-      <Info 
-        style={{ color: darkMode.isOn ? 'red' : 'black' }}
-      >
-        <div/>
-        <InfoTitle>Synthwave </InfoTitle>
-        <InfoType>(sketch)</InfoType>
-        <InfoContent>#React.js #Three.js</InfoContent>
-        <div/>
+      <Info style={{ color: darkMode.isOn ? (info.color?? '#898989') : 'black' }} >
+        {info && <>
+          <InfoTitle className={textClassName}>
+            {info?.title?? ''}
+          </InfoTitle>
+          <br/>
+          <InfoType className={textClassName}>
+            <i>({info?.type?? ''})</i> /{info?.tags?? ''}/
+          </InfoType>
+          <br/>
+          <InfoContent className={textClassName}>
+            {info?.about?? ''}
+          </InfoContent>
+        </>}
+
+        <BottomRow>
+          <div className='button' onClick={() => browseWork(-1)}>
+            <span>{'< prev'}</span>
+          </div>
+          <div className='button' onClick={() => browseWork(1)}>
+            <span>{'next >'}</span>
+          </div>
+        </BottomRow>
       </Info>
+
     </>
   )
 }

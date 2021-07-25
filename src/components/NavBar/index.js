@@ -10,12 +10,8 @@ export default function NavBar() {
 
   const NavButton = ({ target }) => {
 
-    const onClick = () => {
-      console.log(target)
-    }
-
     return (
-      <Link to={`/${target}`} onClick={onClick}>
+      <Link to={`/${target}`} className='button' >
         <span>{target == '' ? 'home' : target}</span>
       </Link>
     )

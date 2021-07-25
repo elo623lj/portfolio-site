@@ -1,5 +1,7 @@
-import React from 'react'
-import { Switch, Route } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
+import store from '@/store'
+import { Switch, Route, useLocation } from 'react-router-dom'
 import { ConnectedRouter } from 'connected-react-router'
 
 import history from './history'
@@ -9,15 +11,47 @@ import DarkButton from '@/components/DarkButton'
 import Home from '@/pages/Home'
 import Works from '@/pages/Works'
 
-const Routes = () => (
-  <ConnectedRouter history={history}>
-    <Switch>
+const Routes = () => {
+
+  const defaultLocation = useLocation()
+  const location = useSelector(state => state.location.current)
+
+  useEffect(() => {
+    store.dispatch({ type: 'INIT_LOCATION', location: defaultLocation })
+  }, [])
+
+  useEffect(() => {
+    store.dispatch({ type: 'SET_LOCATION_REQUEST', location: defaultLocation })
+    document.body.classList.add("is-route-changing")
+    console.log(location?.pathname, location?.pathname != '/')
+    if (location?.pathname != '/') {
+      setTimeout(
+        () => store.dispatch({ type: 'SET_LOCATION' })
+      , 400)
+    }
+  }, [defaultLocation])
+
+  useEffect(() => {
+    document.body.classList.remove("is-route-changing")
+    if (location?.pathname == '/' || location?.pathname.includes('works') )
+      document.body.classList.add("is-three-loading")
+  }, [location])
+
+  return (
+    <Switch location={location?? defaultLocation}>
       <Route exact path="/" component={Home} />
       <Route path="/works" component={Works} />
     </Switch>
-    <NavBar/>
-    <DarkButton/>
-  </ConnectedRouter>
-);
+  )
+}
 
-export default Routes;
+export default function Router () {
+
+  return (
+    <ConnectedRouter history={history}>
+      <Routes/>
+      <NavBar/>
+      <DarkButton/>
+    </ConnectedRouter>
+  )
+}

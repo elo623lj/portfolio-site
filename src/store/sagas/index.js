@@ -1,13 +1,14 @@
 import {
   all,
-  // takeLatest,
-} from 'redux-saga/effects';
+  takeLatest,
+} from 'redux-saga/effects'
 
-// import { SessionTypes } from '../ducks/session';
-// import { getSessionRequest } from './session';
+import { DarkModeTypes } from '../ducks/darkMode'
+import { changeDarkMode, darkModeTransitionFinish } from './darkMode'
 
 export default function* rootSaga() {
   yield all([
-    // takeLatest(SessionTypes.GET_SESSION_REQUEST, getSessionRequest),
-  ]);
+    takeLatest(DarkModeTypes.CHANGE_DARK_MODE, changeDarkMode),
+    takeLatest(DarkModeTypes.DARK_MODE_TRANSITION_FINISH, darkModeTransitionFinish),
+  ])
 }

@@ -1,11 +1,11 @@
 import React, { Suspense, useState, useEffect, useMemo, useRef } from 'react'
+import store from '@/store'
+import { useSelector } from 'react-redux'
 import * as THREE from "three"
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { softShadows, OrbitControls } from "@react-three/drei"
+import { Canvas, useFrame } from '@react-three/fiber'
+import { softShadows  } from "@react-three/drei"
 import { EffectComposer, SSAO, BrightnessContrast } from "@react-three/postprocessing"
-
-import Loader from '@/components/Loader'
-import Heptagon from '@/components/Heptagon'
+import { ResizeObserver } from '@juggle/resize-observer'
 
 softShadows({
   frustum: 3.75,
@@ -18,184 +18,234 @@ softShadows({
 const SIZE = 1.3
 const HEIGHT = 2.5
 const SPEED = 0.05
+const START_DELAY = 2
 const START_DURATION = 2.5
 const END_DURATION = 1
 const STOP_DURATION = 2
 const DURATION = START_DURATION + END_DURATION + STOP_DURATION
 const X_COUNT = 20
 const Y_COUNT = 15
-const Background = () => {
-  
-  const sqauresRef = useRef()
+const MIN_Z_SCALE = 0.01
+const RECT_SIZE = [
+  [4, 6],
+  [3, 8],
+  [2, 6]
+]
 
-  // init
-  const squares = useMemo(() => {
-    const temp = []
+const Background = React.memo(function MyComponent({ isKilledRef }) {
+  
+  const rectsMeshRef = useRef()
+  const rectsShadowRef = useRef()
+  const squaresMeshRef = useRef()
+
+  const [rects, setRects] = useState([])
+  const [squares, setSquares] = useState([])
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  const Rect = new THREE.PlaneBufferGeometry(SIZE, SIZE, 1, 2)
+  for (let i = 0; i < 2; i ++ ) {
+    for (let j = 0; j < 2; j ++ ) {
+      const index = j == 0 ? 8 : 11 
+      const position = Rect.attributes.position.array
+      position[index] = HEIGHT
+    }
+  }
+
+  useEffect(() => {
+    if (squaresMeshRef.current) {
+      squares.forEach((square, i) => {
+        let { x, y, width, height } = square
+        dummy.position.set(
+          x + width * SIZE * 0.5,
+          y + height * SIZE * 0.5,
+          0
+        )
+        dummy.scale.set(width, height, 1)
+        dummy.updateMatrix()
+        squaresMeshRef.current.setMatrixAt(i, dummy.matrix)
+      })
+      squaresMeshRef.current.instanceMatrix.needsUpdate = true
+    }
+  }, [squares])
+
+  const genRects = () => {
+    const rects = []
+    const squares = []
+
+    const rand = Math.round(Math.random()) * 2
+
     let xPos = 0
-    let rand = Math.random()
     for (let x = 0; x < X_COUNT; x ++) {
-      const width = x % 3 == 0 ? 4 : x % 3 == 2 ? 3 : 2
-      const height = x % 3 == 2 ? 8 : 6
+      const width = RECT_SIZE[(x + rand) % 3][0]
+      const height = RECT_SIZE[(x + rand) % 3][1]
       let yPos = x % 3 == 0 ? 2 * SIZE : 0
       for (let y = 0; y < Y_COUNT; y ++) {
-        const isTall = y % 2 != 0
-        const height_ = isTall ? height : 2
-        temp.push({ 
-          isTall: isTall,
-          x: xPos,
-          y: yPos,
-          width: width,
-          height: height_,
-          // rand: Math.random() * 0.8,
-          ... isTall && {
-            rand: Math.random() * 0.8
-          }
-        })
-        yPos += height_ * SIZE
+        if (y % 2 != 0) {
+          squares.push({
+            x: xPos,
+            y: yPos,
+            width: width,
+            height: 2,
+          })
+          yPos += 2 * SIZE
+        }
+        else {
+          rects.push({ 
+            x: xPos,
+            y: yPos,
+            width: width,
+            height: height,
+            rand: Math.random() * 0.8,
+            zScale: MIN_Z_SCALE,
+          })
+          yPos += height * SIZE
+        }
       }
       xPos += width * SIZE
     }
-    return temp
+
+    setRects(rects)
+    setSquares(squares)
+  }
+
+  useEffect(() => {
+    genRects()
   }, [])
 
   // update
   let progress = 0
   let direction = 1
-  let isReset = false
-
+  let isRegened = true
+  let isStarted = false
   useFrame((state) => {
-    const t = state.clock.getElapsedTime() % DURATION
-    if (t < START_DURATION) {
-      direction = 1
-      progress = t / START_DURATION
+
+    if (state.clock.getElapsedTime() > START_DELAY) {
+      isStarted = true
     }
-    else if (t - START_DURATION < END_DURATION) {
-      direction = -1
-      progress = 1 - (t - START_DURATION) / END_DURATION
-    }
-    else {
-      progress = 0
-      isReset = true
-    }
-
-    for (const square of sqauresRef.current.children) {
-      if (square.isTall) {
-
-        const isAnimating = (direction == 1 && progress > square.rand) || (direction == -1 && progress < square.rand) 
-        if (isAnimating) {
-          for (let i = 0; i < 2; i ++ ) {
-            for (let j = 0; j < 2; j ++ ) {
-              const index = j == 0 ? 8 : 11 
-              const position = square.children[i].geometry.attributes.position.array
-
-              // if (square.isMouseOver) {
-              //   square.extraHeight += SPEED
-              //   square.extraHeight = Math.min(square.extraHeight, HEIGHT)
-              // }
-              // else if (square.extraHeight > 0) {
-              //   square.extraHeight -= SPEED
-              //   square.extraHeight = Math.max(square.extraHeight, 0)
-              // }
-
-              position[index] += direction * SPEED
-              position[index] = Math.max(Math.min(position[index], HEIGHT), 0)
-
-            }
-            square.children[i].geometry.attributes.position.needsUpdate = true
-          }
+    
+    if (isStarted) {
+      const t = (state.clock.getElapsedTime() - START_DELAY) % DURATION
+      if (isKilledRef.current) { // change page
+        direction = -1
+      }
+      else {
+        if (!isRegened && Math.abs(t - DURATION) < 0.08) {
+          genRects()
+          isRegened = true
+        }
+        else if (t < START_DURATION) {
+          direction = 1
+          progress = t / START_DURATION
+          if (isRegened) isRegened = false
+        }
+        else if (t - START_DURATION < END_DURATION) {
+          direction = -1
+          progress = 1 - (t - START_DURATION) / END_DURATION
+        }
+        else {
+          progress = 0
         }
       }
     }
+
+    rects.forEach((rect, i) => {
+      let { x, y, width, height, rand } = rect
+      let zScale = isStarted ? rectsMeshRef.current.instanceMatrix.array[i * 16 + 10] : MIN_Z_SCALE
+
+      const isTriggered = isKilledRef.current || (direction == 1 && progress > rand) || (direction == -1 && progress < rand)
+      if (isTriggered) {
+        zScale += direction * SPEED
+        zScale = Math.max(Math.min(zScale, 1), MIN_Z_SCALE)
+      }
+
+      dummy.position.set(
+        x + width * SIZE * 0.5,
+        y + height * SIZE * 0.5,
+        0
+      )
+      dummy.scale.set(width, height, zScale)
+      dummy.updateMatrix()
+      rectsMeshRef.current.setMatrixAt(i, dummy.matrix)
+
+      if (zScale < 0.03) 
+        dummy.scale.set(0, 0, 0)
+      else
+        dummy.scale.set(width, height, zScale * 0.9)
+      dummy.updateMatrix()
+      rectsShadowRef.current.setMatrixAt(i, dummy.matrix)
+    })
+    rectsMeshRef.current.instanceMatrix.needsUpdate = true
+    rectsShadowRef.current.instanceMatrix.needsUpdate = true
+
   })
 
   return (
     <group rotation={[0, 0, -Math.PI * 3 / 4]}>
-      <group ref={sqauresRef} position={[-38, -39, 0]}>
-        {squares.map((square, index) => (
-          <group 
-            key={index} 
-            position={[square.x + square.width * SIZE * 0.5, square.y + square.height * SIZE * 0.5, 0]} 
-            scale={[square.width, square.height, 1]} 
-            isTall={square.isTall}
-            {...square.isTall && { 
-              rand: square.rand
-            }}
-          >
-            <mesh receiveShadow position={[0, 0, 0.01]}>
-              <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
-              <meshStandardMaterial color='white' flatShading />
-            </mesh>
-            <mesh castShadow>
-              <planeBufferGeometry args={[SIZE, SIZE, 1, square.isTall? 2 : 1]}/>
-              <meshStandardMaterial side={THREE.DoubleSide} transparent opacity={0} flatShading  />
-            </mesh>
-          </group>
-        ))}
+      <group position={[-38, -39, 0]}>
+
+        <instancedMesh castShadow ref={rectsShadowRef} args={[null, null, rects.length]} geometry={Rect}>
+          <meshStandardMaterial side={THREE.DoubleSide} transparent opacity={0} flatShading  />
+        </instancedMesh>
+
+        <instancedMesh receiveShadow ref={rectsMeshRef} args={[null, null, rects.length]} geometry={Rect}>
+          <meshStandardMaterial side={THREE.DoubleSide} flatShading />
+        </instancedMesh>
+        
+        <instancedMesh receiveShadow ref={squaresMeshRef} args={[null, null, squares.length]}>
+          <planeBufferGeometry args={[SIZE, SIZE, 1, 1]}/>
+          <meshStandardMaterial side={THREE.DoubleSide} flatShading  />
+        </instancedMesh>
+
       </group>
     </group>
   )
-}
+})
 
-
-const Main = () => {
-
-  const geometry = new THREE.TorusBufferGeometry(5, 1, 32, 32)
-
-  const material = new THREE.MeshPhysicalMaterial({
-    roughness: 1,
-    clearcoat: 1,
-    clearcoatRoughness: 0,
-    transmission: 1,
-    ior: 1.25,
-    envMapIntensity: 25,
-    color: '#ffffff',
-    transparent: true
-  })
-
-  return (
-    <>
-      <mesh material={material} geometry={geometry} rotation={[0, 0, 0]} position={[0, 0, 10]} castShadow>
-      </mesh>
-    </>
-  )
-}
 
 export default function HomeLight() {
 
+  const location = useSelector(state => state.location.target)
+  const isKilledRef = useRef(false)
   useEffect(() => {
-
-
-  }, []); 
+    if (location && location?.pathname != '/') {
+      isKilledRef.current = true
+      setTimeout(
+        () => store.dispatch({ type: 'SET_LOCATION' })
+      , 1500)
+    }
+  }, [location])
 
   return (
-    <Canvas 
-      orthographic 
-      shadows 
-      camera={{ position: [0, 0, 60], fov: 60, zoom: 24 }}
-      gl={{ alpha: false, stencil: false, depth: false, antialias: false }}
-    >
-      <Suspense fallback={<Loader/>}>
-        <ambientLight intensity={0.2} />
-        <directionalLight
-          castShadow
-          position={[0, 0, 40]}
-          intensity={1}
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-          shadow-camera-near={37}
-          shadow-camera-far={80}
-          shadow-camera-left={-35}
-          shadow-camera-right={35}
-          shadow-camera-top={20}
-          shadow-camera-bottom={-20}
-        />
-        <Background/>
-        {/* <Heptagon  /> */}
-        <EffectComposer multisampling={0}>
-          <SSAO samples={25} radius={5} intensity={50} luminanceInfluence={0.6} />
-          <BrightnessContrast brightness={0.2} />
-        </EffectComposer>
-      </Suspense>
-    </Canvas>
+    <>
+      <Canvas 
+        orthographic 
+        shadows 
+        camera={{ position: [0, 0, 60], zoom: 24 }}
+        gl={{ alpha: false, stencil: false, depth: false, antialias: false }}
+        resize={{ polyfill: ResizeObserver }}
+      >
+        <Suspense fallback={null}>
+          <ambientLight intensity={0.2} />
+          <directionalLight
+            castShadow
+            position={[0, 0, 40]}
+            intensity={1}
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
+            shadow-camera-near={37}
+            shadow-camera-far={80}
+            shadow-camera-left={-35}
+            shadow-camera-right={35}
+            shadow-camera-top={20}
+            shadow-camera-bottom={-20}
+          />
+          <Background isKilledRef={isKilledRef} />
+          <EffectComposer multisampling={0}>
+            <SSAO samples={25} radius={5} intensity={50} luminanceInfluence={0.6} />
+            <BrightnessContrast brightness={0.2} />
+          </EffectComposer>
+        </Suspense>
+      </Canvas>
+    </>
   )
 }
